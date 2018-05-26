@@ -2,7 +2,6 @@ using NLog;
 using System;
 using System.Data;
 using System.Data.OleDb;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -32,11 +31,13 @@ namespace TFLLib
 
 		public bool UseCache { get; set; }
 
+#if USE_REDIS
 		private readonly ICacheRepository cache;
+#endif
 
-		#endregion Properties
+#endregion Properties
 
-		#region Constructors
+#region Constructors
 
 		public DataLibrarian(
             string nflConnection,
@@ -77,9 +78,9 @@ namespace TFLLib
 			}
 		}
 
-		#endregion Constructors
+#endregion Constructors
 
-		#region TFL_CTL
+#region TFL_CTL
 
 		public string GetCurrentWeek()
 		{
@@ -103,9 +104,9 @@ namespace TFLLib
 			return season;
 		}
 
-		#endregion TFL_CTL
+#endregion TFL_CTL
 
-		#region LINEUP
+#region LINEUP
 
 		public DataSet PositionsUsed( string teamCode, string season )
 		{
@@ -161,9 +162,9 @@ namespace TFLLib
 			return ds;
 		}
 
-		#endregion LINEUP
+#endregion LINEUP
 
-		#region TEAM
+#region TEAM
 
 		public DataRow TeamDataFor( string teamCode, string season )
 		{
@@ -326,9 +327,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion TEAM
+#endregion TEAM
 
-		#region SCORE
+#region SCORE
 
 		public DataSet ScoresDs( string season, [Optional] string week, [Optional] string game )
 		{
@@ -599,9 +600,9 @@ namespace TFLLib
 			return ( dt.Rows.Count > 0 );
 		}
 
-		#endregion SCORE
+#endregion SCORE
 
-		#region STAT
+#region STAT
 
 		public DataSet PlayerStatsDs( string season, string week, [Optional] string playerId )
 		{
@@ -783,9 +784,9 @@ namespace TFLLib
 			return yearOfLastStat;
 		}
 
-		#endregion STAT
+#endregion STAT
 
-		#region PLAYER
+#region PLAYER
 
 		public string NextId( string firstName, string surname )
 		{
@@ -859,12 +860,16 @@ namespace TFLLib
 		}
 
 		public DataSet GetPlayer(
-		   string teamCode, string strCat, string strRole, string strPos )
+		   string teamCode, 
+		   string strCat, 
+		   string strRole, 
+		   string strPos )
 		{
-			var keyValue = string.Format( "{0}:{1}:{2}:{3}:{4}", "GetPlayer4-DataSet",
-										  teamCode, strCat, strRole, strPos );
-			if ( !cache.TryGet( keyValue, out DataSet ds ) )
-			{
+			var keyValue = $"{"GetPlayer4-DataSet"}:{teamCode}:{strCat}:{strRole}:{strPos}";
+
+			//if ( !cache.TryGet( keyValue, out DataSet ds ) )
+			//{
+
 				string commandStr;
 
 				if ( strCat == "*" )
@@ -901,12 +906,14 @@ namespace TFLLib
 					commandStr += " and POSDESC like '%" + strPos.Trim() + "%'";
 
 				commandStr += " order by CATEGORY";
-				ds = GetNflDataSet( "player", commandStr, "GetPlayer" );
+				var ds = GetNflDataSet( "player", commandStr, "GetPlayer" );
 				Logger.Trace( $"{commandStr} begets {ds.Tables[ 0 ].Rows.Count} players" );
-				cache.Set( keyValue, ds, new TimeSpan( hours: 2, minutes: 0, seconds: 0 ) );
-			}
-			else
-				LogCacheHit( keyValue );
+
+			//cache.Set( keyValue, ds, new TimeSpan( hours: 2, minutes: 0, seconds: 0 ) );
+			//}
+			//else
+			//	LogCacheHit( keyValue );
+
 			return ds;
 		}
 
@@ -1153,9 +1160,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion PLAYER
+#endregion PLAYER
 
-		#region COMP (TYCOON DB)
+#region COMP (TYCOON DB)
 
 		public string GetStatus( string playerCode, string compCode, string season )
 		{
@@ -1212,9 +1219,9 @@ namespace TFLLib
 			return ds.Tables[ 0 ].Rows[ 0 ];
 		}
 
-		#endregion COMP (TYCOON DB)
+#endregion COMP (TYCOON DB)
 
-		#region SEASON
+#region SEASON
 
 		public DateTime GetSeasonStartDate( string season )
 		{
@@ -1231,9 +1238,9 @@ namespace TFLLib
 			return new DateTime( 1, 1, 1 );
 		}
 
-		#endregion SEASON
+#endregion SEASON
 
-		#region SERVE
+#region SERVE
 
 		public DateTime LastContract(string playerId)
 		{
@@ -1468,9 +1475,9 @@ namespace TFLLib
 			return lastSeason;
 		}
 
-		#endregion SERVE
+#endregion SERVE
 
-		#region SCHED
+#region SCHED
 
 		private DateTime WeekStarts( int season, int week )
 		{
@@ -1950,9 +1957,9 @@ namespace TFLLib
 			return ( !nHomeScore.Equals( 0 ) || !nAwayScore.Equals( 0 ) ) && ( gameDate <= DateTime.Now );
 		}
 
-		#endregion SCHED
+#endregion SCHED
 
-		#region PREDICTION
+#region PREDICTION
 
 		public DataSet GetAllPredictions( string season, string method )
 		{
@@ -2016,9 +2023,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion PREDICTION
+#endregion PREDICTION
 
-		#region ACE
+#region ACE
 
 		public DataSet GetAce( string season, string week, string playerId )
 		{
@@ -2065,9 +2072,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion ACE
+#endregion ACE
 
-		#region URATINGS
+#region URATINGS
 
 		//  Unit ratings table has all the ratings that have been generated (assumes they are correct)
 		//  The ratings values are those going into the contest identified by the NFL sunday of the week
@@ -2123,9 +2130,9 @@ namespace TFLLib
 			}
 		}
 
-		#endregion URATINGS
+#endregion URATINGS
 
-		#region RUNS (TYCOON DB)
+#region RUNS (TYCOON DB)
 
 		public void InsertRun( string stepName, TimeSpan ts, string category )
 		{
@@ -2177,9 +2184,9 @@ namespace TFLLib
 			return ds.Tables[ "RUNS" ];
 		}
 
-		#endregion RUNS (TYCOON DB)
+#endregion RUNS (TYCOON DB)
 
-		#region UNITPERF
+#region UNITPERF
 
 		public void InsertUnitPerformance( string teamCode, string unitCode, string season, int week,
 		   string opponent, string leader, string oppLeader, string unitRate, string oppRate,
@@ -2215,9 +2222,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion UNITPERF
+#endregion UNITPERF
 
-		#region Other Storing
+#region Other Storing
 
 		public void StorePlayerRoleAndPos( string role, string pos, string playerId )
 		{
@@ -2348,9 +2355,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion Other Storing
+#endregion Other Storing
 
-		#region PGMETRIC
+#region PGMETRIC
 
 		public DataSet GetPlayerGameMetrics( string playerCode, string gameCode )
 		{
@@ -2467,9 +2474,9 @@ namespace TFLLib
 			ExecuteNflCommand( commandStr );
 		}
 
-		#endregion PGMETRIC
+#endregion PGMETRIC
 
-		#region Utility
+#region Utility
 
 		private static string FixSingleQuotes( string playerId )
 		{
@@ -2557,23 +2564,27 @@ namespace TFLLib
 		}
 
 
-		private DataSet CacheCommand( string keyValue,
-			  string commandStr, string dsName, string caller = "", TimeSpan? timeSpan = null )
+		private DataSet CacheCommand( 
+			string keyValue,
+			string commandStr, 
+			string dsName, 
+			string caller = "", 
+			TimeSpan? timeSpan = null )
 		{
 			//UseCache = true;  //Best way to control this atm is just not to run the redis server
-			if ( !UseCache )
+			//if ( !UseCache )
 				return NoCacheCommand(keyValue, commandStr, dsName, caller);
 
-			if ( timeSpan == null )	timeSpan = TimeSpan.FromHours( 4 );
+			//if ( timeSpan == null )	timeSpan = TimeSpan.FromHours( 4 );
 
-			if ( !cache.TryGet( keyValue, out DataSet ds ) )
-			{
-				ds = GetNflDataSet( dsName, commandStr, caller );
-				cache.Set( keyValue, ds, timeSpan );
-			}
-			else
-				LogCacheHit( keyValue, caller );
-			return ds;
+			//if ( !cache.TryGet( keyValue, out DataSet ds ) )
+			//{
+			//	ds = GetNflDataSet( dsName, commandStr, caller );
+			//	cache.Set( keyValue, ds, timeSpan );
+			//}
+			//else
+			//	LogCacheHit( keyValue, caller );
+			//return ds;
 		}
 
 		private DataSet NoCacheCommand(
@@ -2588,6 +2599,6 @@ namespace TFLLib
 			return ds;
 		}
 
-		#endregion Utility
+#endregion Utility
 	}
 }
