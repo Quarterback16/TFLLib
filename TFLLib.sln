@@ -1,22 +1,41 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFLLib", "TFLLib.csproj", "{0991C340-E6DE-45F2-8792-FBCB96B232DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFLLib.IntegrationTests", "..\TFLLib.IntegrationTests\TFLLib.IntegrationTests.csproj", "{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Debug|x86.ActiveCfg = Debug|x86
+		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Debug|x86.Build.0 = Debug|x86
 		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Release|x86.ActiveCfg = Release|x86
+		{0991C340-E6DE-45F2-8792-FBCB96B232DE}.Release|x86.Build.0 = Release|x86
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Debug|x86.ActiveCfg = Debug|x86
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Debug|x86.Build.0 = Debug|x86
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Release|x86.ActiveCfg = Release|x86
+		{65EC6D8C-0FAC-4CB8-97BD-A93F189B24BB}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6AE53E1C-0A70-4457-B933-BD83581BDC68}
 	EndGlobalSection
 EndGlobal

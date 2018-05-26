@@ -1241,7 +1241,7 @@ namespace TFLLib
 			var keyValue = $"{"LastContract-Date"}:{playerId}";
 
 			var commandStr = $"select * from SERVE where PLAYERID='{playerId}'";
-			commandStr += " order by FROM asc";
+			commandStr += " order by FROM desc";
 			var ds = CacheCommand(
 				keyValue, 
 				commandStr, 
