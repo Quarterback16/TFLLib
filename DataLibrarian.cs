@@ -1,11 +1,14 @@
-using NLog;
+#define USE_REDIS
+
+using Cache;
+using Cache.Interfaces;
 using System;
 using System.Data;
 using System.Data.OleDb;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
-using TFLLib.Caching;
+
 
 namespace TFLLib
 {
@@ -27,9 +30,10 @@ namespace TFLLib
 		public OleDbConnection OleDbConnTycoon;
 		public OleDbConnection OleDbConnControl;
 
-		public Logger Logger { get; set; }
+		public ILog Logger { get; set; }
 
 		public bool UseCache { get; set; }
+		public int HitCount { get => hitCount; set => hitCount = value; }
 
 #if USE_REDIS
 		private readonly ICacheRepository cache;
@@ -42,11 +46,12 @@ namespace TFLLib
 		public DataLibrarian(
             string nflConnection,
             string tflConnection,
-            string ctlConnection )
+            string ctlConnection,
+			ILog logger)
 		{
 			try
 			{
-				Logger = LogManager.GetCurrentClassLogger();
+				Logger = logger;
 				// Connect to a database
 				OleDbConn = new OleDbConnection( nflConnection );
 				//  This is the default (ie dont return deleted records)
@@ -61,11 +66,16 @@ namespace TFLLib
 
                 try
                 {
-                    Logger.Trace(message: "Turning Cache off");
-                    UseCache = false;
-                    //cache = new RedisCacheRepository();
-                }
-                catch (Exception)
+                    cache = new RedisCacheRepository(
+						connectionString: "localhost,abortConnect=false",
+						environment: "local",
+						functionalArea: "tfl",
+						serializer: new XmlSerializer(),
+						logger: Logger);
+					UseCache = true;
+					Logger.Trace(message: "Turning Cache ON");
+				}
+				catch (Exception)
                 {
                     Logger.Trace(message: "Turning Cache off");
                     UseCache = false;
@@ -938,8 +948,12 @@ namespace TFLLib
 			playerCode = FixSingleQuotes( playerCode );
 			var keyValue = $"{"GetPlayer-DataSet"}:{playerCode}";
 			var commandStr = $"SELECT * FROM PLAYER where PLAYERID =\"{playerCode}\"";
-			var ds = CacheCommand( keyValue, commandStr, dsName: "player", caller: "GetPlayer3",
-			   timeSpan: TimeSpan.FromHours( 1 ) );
+			var ds = CacheCommand( 
+				keyValue, 
+				commandStr, 
+				dsName: "player", 
+				caller: "GetPlayer3",
+			    timeSpan: TimeSpan.FromHours( 1 ) );
 			return ds;
 		}
 
@@ -2534,7 +2548,7 @@ namespace TFLLib
 
 		public void WriteToLog( string msg )
 		{
-			if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
+			//if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
 			Logger.Info( msg );
 		}
 
@@ -2542,7 +2556,7 @@ namespace TFLLib
 
 		public void IoTrace( string ioCommand, string caller = "" )
 		{
-			if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
+			//if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
 			ioCount++;
 			Logger.Trace( string.Format( "   ({0}) >>>{1}  {2}",
 			   ioCount, ioCommand, caller ) );
@@ -2550,17 +2564,17 @@ namespace TFLLib
 
 		public void IoInfo( string ioCommand, string caller = "" )
 		{
-			if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
+			//if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
 			Logger.Info( $"   ({ioCommand}) >>>{caller}" );
 		}
 
-		private static int hitCount = 0;
+		private int hitCount = 0;
 
 		public void LogCacheHit( string keyValue, string caller = "" )
 		{
-			if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
-			hitCount++;
-			Logger.Trace( $"   cache ({hitCount}) hit ({keyValue}) {caller}" );
+			//if ( Logger == null ) Logger = LogManager.GetCurrentClassLogger();
+			HitCount++;
+			Logger.Trace( $"   cache ({HitCount}) hit ({keyValue}) {caller}" );
 		}
 
 
@@ -2571,20 +2585,19 @@ namespace TFLLib
 			string caller = "", 
 			TimeSpan? timeSpan = null )
 		{
-			//UseCache = true;  //Best way to control this atm is just not to run the redis server
-			//if ( !UseCache )
+			if ( !UseCache )
 				return NoCacheCommand(keyValue, commandStr, dsName, caller);
 
-			//if ( timeSpan == null )	timeSpan = TimeSpan.FromHours( 4 );
+			if (timeSpan == null) timeSpan = TimeSpan.FromHours(4);
 
-			//if ( !cache.TryGet( keyValue, out DataSet ds ) )
-			//{
-			//	ds = GetNflDataSet( dsName, commandStr, caller );
-			//	cache.Set( keyValue, ds, timeSpan );
-			//}
-			//else
-			//	LogCacheHit( keyValue, caller );
-			//return ds;
+			if (!cache.TryGet(keyValue, out DataSet ds))
+			{
+				ds = GetNflDataSet(dsName, commandStr, caller);
+				cache.Set(keyValue, ds, timeSpan);
+			}
+			else
+				LogCacheHit(keyValue, caller);
+			return ds;
 		}
 
 		private DataSet NoCacheCommand(
@@ -2595,7 +2608,7 @@ namespace TFLLib
                 tableName: dsName,
                 commandStr: commandStr,
                 caller: caller,
-                logit: true);
+                logit: false);
 			return ds;
 		}
 

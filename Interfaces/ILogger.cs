@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace TFLLib.Interfaces
+﻿namespace TFLLib.Interfaces
 {
-   public interface ILogger
+	public interface ILogger
    {
       /// <summary>
       ///     Gets this logger's name.

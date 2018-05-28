@@ -1,4 +1,4 @@
-using NLog;
+using Cache.Interfaces;
 using System;
 using System.Data;
 using System.Runtime.InteropServices;
@@ -9,7 +9,8 @@ namespace TFLLib
 	{
 		string NflConnectionName { get; set; }
 		string NflConnectionString { get; set; }
-		Logger Logger { get; set; }
+
+		ILog Logger { get; set; }
 
 		string GetCurrentWeek();
 
